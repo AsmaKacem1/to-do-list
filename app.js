@@ -28,36 +28,58 @@ const item3=new Item({
 
 const listItems=[item1,item2,item3];
 
-Item.insertMany(listItems,function(err){
-    if(err){
-        console.log("check there is an error!");
-    }else{
-        console.log("success!");
-    }
-})
 
 app.set("view engine","ejs");
 app.use(bodyParser.urlencoded({extended:true}));
+
+
 app.get("/",function(req,res){
-    
+
     let day=date.getDate();
-    res.render("list",{ListTitle:day,newListItems:items});
+    Item.find({},function(err,fItems){
+
+        if(fItems.length===0){
+            Item.insertMany(listItems,function(err){
+                if(err){
+                    console.log("check there is an error!");
+                }else{
+                    console.log("success!");
+                }
+            })
+            res.redirect("/");
+        }
+        else{
+            res.render("list",{ListTitle:day,newListItems:fItems});
+        }
+    })
 });
 
 app.post("/",function(req,res){
 
-    let item= req.body.newItem;
+    const itemName= req.body.newItem;
 
-    if (req.body.key === "Work"){
-        workItems.push(item);
-        res.redirect("/work");
-    } else{
-        items.push(item);
-        res.redirect("/");
-    }
+    const item=new Item({
+        name:itemName
+    })
+    item.save();
+    res.redirect("/");
 
     
 })
+
+
+app.post("/delete",function(req,res){
+
+    const Delitem= req.body.boxitem;
+    Item.findByIdAndRemove(Delitem,function(err){
+        if(!err){
+            console.log("item deleted");
+            res.redirect("/");
+    };
+
+});
+})
+
 
 app.get("/work" ,function(req,res){
     res.render("list", {ListTitle: "Work List", newListItems:workItems})
