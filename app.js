@@ -12,6 +12,12 @@ const ItemsSchema ={
     name:String
 };
 
+const listSchema ={
+    name:String,
+    items: [ItemsSchema]
+};
+
+const List = mongoose.model("List",listSchema);
 const Item=mongoose.model("item",ItemsSchema);
 
 const item1=new Item({
@@ -49,7 +55,7 @@ app.get("/",function(req,res){
             res.redirect("/");
         }
         else{
-            res.render("list",{ListTitle:day,newListItems:fItems});
+            res.render("list",{listTitle:day,newListItems:fItems});
         }
     })
 });
@@ -81,8 +87,23 @@ app.post("/delete",function(req,res){
 })
 
 
-app.get("/work" ,function(req,res){
-    res.render("list", {ListTitle: "Work List", newListItems:workItems})
+app.get("/:customListName" ,function(req,res){
+    const customListName=req.params.customListName;
+    List.findOne({name: customListName},function(err,foundList){
+        if (!err){
+            if(!foundList){
+                const list =new List({
+                    name: customListName,
+                    items: listItems
+                });
+                list.save();
+                res.redirect("/" + customListName);
+            }
+            else {
+                res.render("list",{listTitle: foundList.name, newListItems: foundList.items})
+            }
+        }
+    })
 })
 
 app.post("/work",function(req,res){
